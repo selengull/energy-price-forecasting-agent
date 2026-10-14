@@ -21,6 +21,18 @@ data/raw/energy_dataset.csv
 data/raw/weather_features.csv
 ```
 
+## Exploratory Analysis Highlights
+
+Full analysis: [`notebooks/01_eda.ipynb`](notebooks/01_eda.ipynb)
+
+![Price over time](reports/figures/price_over_time.png)
+
+- **Strong seasonality:** two daily peaks on weekdays (9–12h and 19–21h), cheaper weekends, cheapest in spring.
+- **Generation mix matters:** coal, gas and demand push prices up; wind pushes them down.
+- **Benchmark to beat:** the official day-ahead forecast has an MAE of **10.5 €/MWh** and underestimates the actual price by ≈ 8 € on average.
+
+![Seasonality](reports/figures/seasonality.png)
+
 ## Project Structure
 
 ```
@@ -47,7 +59,7 @@ pip install -r requirements.txt
 
 ## Roadmap
 
-- [ ] Data loading, cleaning and EDA
+- [x] Data loading, cleaning and EDA
 - [ ] Baseline and gradient boosting forecasting models
 - [ ] SHAP explainability and R statistical analysis
 - [ ] LLM analyst agent with tools

@@ -10,3 +10,6 @@ plotly>=5.20
 # Notebooks
 jupyter>=1.0
 ipykernel>=6.29
+
+# Storage
+pyarrow>=15.0
