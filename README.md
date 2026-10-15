@@ -52,6 +52,18 @@ Full analysis: [`notebooks/02_modeling.ipynb`](notebooks/02_modeling.ipynb)
 
 ![Forecast week](reports/figures/forecast_week.png)
 
+## Explainability (SHAP)
+
+Full analysis: [`notebooks/03_explainability.ipynb`](notebooks/03_explainability.ipynb)
+
+Every forecast is broken down into per-feature contributions, so we can answer *"why does the model expect this price?"*.
+
+![SHAP beeswarm](reports/figures/shap_beeswarm.png)
+
+- The official day-ahead price and recent prices are the main drivers.
+- Weekends lower the forecast; more forecast wind lowers it, higher residual load raises it.
+- **Failure case:** on Easter Sunday night 2018 the model followed an extremely low market signal too closely (predicted 13.9 €, actual 32.8 €).
+
 ## Project Structure
 
 ```

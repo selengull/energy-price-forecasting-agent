@@ -23,3 +23,6 @@ models/*.joblib
 Thumbs.db
 .vscode/
 .idea/
+
+# Personal practice notebooks
+notebooks/playground*.ipynb
