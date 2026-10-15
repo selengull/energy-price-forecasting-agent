@@ -13,3 +13,9 @@ ipykernel>=6.29
 
 # Storage
 pyarrow>=15.0
+
+# Modelling
+scikit-learn>=1.4
+lightgbm>=4.3
+holidays>=0.50
+joblib>=1.3

@@ -1,0 +1,37 @@
+{
+  "Naive (24h ago)": {
+    "MAE": 5.207,
+    "RMSE": 7.696,
+    "Bias": 0.113
+  },
+  "Seasonal naive (1 week ago)": {
+    "MAE": 6.386,
+    "RMSE": 9.643,
+    "Bias": 0.353
+  },
+  "Official day-ahead forecast": {
+    "MAE": 8.861,
+    "RMSE": 11.892,
+    "Bias": 6.145
+  },
+  "Ridge (no official fcst)": {
+    "MAE": 4.222,
+    "RMSE": 5.971,
+    "Bias": 0.594
+  },
+  "LightGBM (no official fcst)": {
+    "MAE": 4.157,
+    "RMSE": 5.926,
+    "Bias": 0.781
+  },
+  "Ridge": {
+    "MAE": 4.039,
+    "RMSE": 5.752,
+    "Bias": -0.878
+  },
+  "LightGBM": {
+    "MAE": 3.804,
+    "RMSE": 5.398,
+    "Bias": -0.958
+  }
+}
