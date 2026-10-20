@@ -64,6 +64,14 @@ Every forecast is broken down into per-feature contributions, so we can answer *
 - Weekends lower the forecast; more forecast wind lowers it, higher residual load raises it.
 - **Failure case:** on Easter Sunday night 2018 the model followed an extremely low market signal too closely (predicted 13.9 €, actual 32.8 €).
 
+## Statistical Analysis in R
+
+Full analysis: [`r_analysis/`](r_analysis/README.md)
+
+A regression with Newey-West standard errors (to account for autocorrelation) shows that **each extra GW of forecast wind lowers the price by ≈ 1 €/MWh** (95% CI −1.15 to −0.87), holding demand, solar and calendar effects constant. This is the *merit order effect* of renewables.
+
+![Wind effect](reports/figures/r_wind_effect.png)
+
 ## Project Structure
 
 ```
@@ -92,7 +100,7 @@ pip install -r requirements.txt
 
 - [x] Data loading, cleaning and EDA
 - [x] Baseline and gradient boosting forecasting models
-- [ ] SHAP explainability and R statistical analysis
+- [x] SHAP explainability and R statistical analysis
 - [ ] LLM analyst agent with tools
 - [ ] Streamlit app
 - [ ] Final results and demo
