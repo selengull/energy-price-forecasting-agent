@@ -26,3 +26,6 @@ shap>=0.46
 # LLM agent
 openai>=1.40
 python-dotenv>=1.0
+
+# App
+streamlit>=1.38

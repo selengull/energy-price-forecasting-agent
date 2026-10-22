@@ -23,6 +23,7 @@ SCHEMA_DESCRIPTION = """
 Table `hourly` (one row per hour, Spain, 2015-01-01 to 2018-12-31, local Madrid time):
 - time TEXT, format 'YYYY-MM-DD HH:MM:SS'
 - year INTEGER, month INTEGER (1-12), day_of_week INTEGER (0=Monday ... 6=Sunday), hour INTEGER (0-23)
+- is_weekend INTEGER: 1 on Saturday and Sunday, 0 on weekdays. Use this column for weekday/weekend questions.
 - price REAL: actual electricity price in EUR/MWh
 - price_day_ahead REAL: official day-ahead market price in EUR/MWh
 - demand_mw REAL: actual electricity demand in MW
@@ -46,6 +47,7 @@ def _hourly_table(df: pd.DataFrame) -> pd.DataFrame:
     out["year"] = df.index.year
     out["month"] = df.index.month
     out["day_of_week"] = df.index.dayofweek
+    out["is_weekend"] = (df.index.dayofweek >= 5).astype(int)
     out["hour"] = df.index.hour
     out["price"] = df["price_actual"]
     out["price_day_ahead"] = df["price_day_ahead"]

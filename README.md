@@ -132,8 +132,13 @@ python -m src.agent.database     # build the SQLite database for the agent
 To run the agent, start the LM Studio server with `qwen3-4b-instruct-2507` loaded, copy `.env.example` to `.env`, then:
 
 ```bash
-python -m src.agent.agent
+python -m src.agent.agent             # chat in the terminal
+streamlit run app/streamlit_app.py    # or use the web app
 ```
+
+The web app has two tabs:
+- **Ask the analyst:** chat with the agent; every tool call (including the generated SQL and its result) can be expanded.
+- **Forecast explorer:** pick any day in 2018 to compare the actual price, the model forecast and the official day-ahead price, then pick an hour to see its SHAP drivers.
 
 ## Roadmap
 
@@ -141,5 +146,5 @@ python -m src.agent.agent
 - [x] Baseline and gradient boosting forecasting models
 - [x] SHAP explainability and R statistical analysis
 - [x] LLM analyst agent with tools
-- [ ] Streamlit app
+- [x] Streamlit app
 - [ ] Final results and demo
