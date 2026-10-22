@@ -72,6 +72,35 @@ A regression with Newey-West standard errors (to account for autocorrelation) sh
 
 ![Wind effect](reports/figures/r_wind_effect.png)
 
+## LLM Analyst Agent
+
+Code: [`src/agent/`](src/agent/)
+
+An agent that answers natural-language questions about the market by deciding which tool to call:
+
+| Tool | What it does |
+|---|---|
+| `query_database` | Runs a read-only SQL query over historical data (2015–2018) and the model's 2018 forecasts |
+| `forecast_price` | Returns the model's forecast for a specific hour, with the actual and official prices |
+| `explain_forecast` | Explains a forecast with its top SHAP drivers |
+
+The agent runs a tool-calling loop: the LLM requests a tool, Python executes it, the result is sent back, and this repeats until the LLM writes a final answer.
+
+```
+You: What was the model's biggest error in 2018 and when did it happen?
+  [tool] query_database(SELECT time, abs_error FROM forecasts WHERE year = 2018 ...)   -> error: no such column
+  [tool] query_database(SELECT time, abs_error FROM forecasts ORDER BY abs_error DESC LIMIT 1)
+
+Agent: The model's biggest error in 2018 was €34.66/MWh, at 19:00 on March 11, 2018.
+```
+
+**Design choices**
+- **Runs locally for free** with [LM Studio](https://lmstudio.ai) and `qwen3-4b-instruct-2507` (fits on a 4 GB GPU). Any OpenAI-compatible endpoint works by changing `.env`.
+- **Grounded answers:** the system prompt requires every number to come from a tool result.
+- **Safe SQL:** only single `SELECT` statements, executed on a read-only connection.
+- **Self-correction:** tool errors are returned to the LLM so it can fix its own query (see example above).
+- **Bounded:** at most 6 tool-calling steps per question.
+
 ## Project Structure
 
 ```
@@ -94,6 +123,16 @@ A regression with Newey-West standard errors (to account for autocorrelation) sh
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 pip install -r requirements.txt
+
+python -m src.data.load          # clean the raw data
+jupyter nbconvert --to notebook --execute --inplace notebooks/02_modeling.ipynb   # train and save the model
+python -m src.agent.database     # build the SQLite database for the agent
+```
+
+To run the agent, start the LM Studio server with `qwen3-4b-instruct-2507` loaded, copy `.env.example` to `.env`, then:
+
+```bash
+python -m src.agent.agent
 ```
 
 ## Roadmap
@@ -101,6 +140,6 @@ pip install -r requirements.txt
 - [x] Data loading, cleaning and EDA
 - [x] Baseline and gradient boosting forecasting models
 - [x] SHAP explainability and R statistical analysis
-- [ ] LLM analyst agent with tools
+- [x] LLM analyst agent with tools
 - [ ] Streamlit app
 - [ ] Final results and demo
