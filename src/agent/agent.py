@@ -29,6 +29,7 @@ Tools:
 - query_database: SQL over historical data (2015-2018) and over the model's 2018 forecasts.
 - forecast_price: the model's forecast for one specific hour in 2018.
 - explain_forecast: why the model forecast that price (SHAP drivers in EUR/MWh).
+- run_scenario: what-if analysis, e.g. how the price would change with more wind, more solar or higher demand.
 
 Database schema:
 {SCHEMA_DESCRIPTION}

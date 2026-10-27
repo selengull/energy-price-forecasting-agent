@@ -29,6 +29,8 @@ EXAMPLE_QUESTIONS = [
     "Which hour of the day is the most expensive on weekdays?",
     "What was the model's biggest error in 2018 and when did it happen?",
     "Why did the model forecast that price for 18 September 2018 at 20:00?",
+    "How would the price on 6 November 2018 at 08:00 change if wind generation were 5 GW higher?",
+    "What if demand were 3 GW higher on 6 November 2018 at 20:00?",
 ]
 
 

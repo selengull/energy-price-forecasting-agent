@@ -83,6 +83,9 @@ An agent that answers natural-language questions about the market by deciding wh
 | `query_database` | Runs a read-only SQL query over historical data (2015–2018) and the model's 2018 forecasts |
 | `forecast_price` | Returns the model's forecast for a specific hour, with the actual and official prices |
 | `explain_forecast` | Explains a forecast with its top SHAP drivers |
+| `run_scenario` | What-if analysis: re-runs the forecast with more/less wind, solar or demand |
+
+> **Why a second model for scenarios?** The main model relies heavily on the official day-ahead price, which already reflects expected wind and demand. Changing wind while holding that price fixed barely moves its forecast (−0.17 €/MWh per GW). Scenarios therefore use a *fundamentals-only* model (test MAE 4.16), which responds with −0.76 €/MWh per GW, in line with the R regression (−1.01).
 
 The agent runs a tool-calling loop: the LLM requests a tool, Python executes it, the result is sent back, and this repeats until the LLM writes a final answer.
 

@@ -37,6 +37,17 @@ class ForecastService:
     def explainer(self):
         return get_explainer(self.model)
 
+    @cached_property
+    def fundamentals_model(self):
+        """Model trained without the official day-ahead price.
+
+        The main model leans heavily on the official price, which already reflects
+        expected wind, solar and demand. If we change wind but keep the official price
+        fixed, the main model barely reacts. This model forecasts from fundamentals
+        only, so it responds realistically to what-if changes.
+        """
+        return load_model("lightgbm_price_24h_fundamentals")
+
     def to_timestamp(self, when: str) -> pd.Timestamp:
         X_test, _ = self._test_data
         ts = pd.Timestamp(when)
@@ -63,6 +74,31 @@ class ForecastService:
         X_test, _ = self._test_data
         return explain_prediction(self.explainer, X_test, self.to_timestamp(when), top_n=top_n)
 
+    def scenario(self, when: str, wind_change_mw: float = 0, solar_change_mw: float = 0, demand_change_mw: float = 0) -> dict:
+        """Re-run the forecast with changed wind, solar or demand forecasts for one hour."""
+        X_test, _ = self._test_data
+        ts = self.to_timestamp(when)
+        base = X_test.loc[[ts]].drop(columns=["price_day_ahead"])
+
+        changed = base.copy()
+        changed["forecast_wind_onshore_day_ahead"] = (changed["forecast_wind_onshore_day_ahead"] + wind_change_mw).clip(lower=0)
+        changed["forecast_solar_day_ahead"] = (changed["forecast_solar_day_ahead"] + solar_change_mw).clip(lower=0)
+        changed["total_load_forecast"] = changed["total_load_forecast"] + demand_change_mw
+        changed["residual_load_forecast"] = (
+            changed["total_load_forecast"] - changed["forecast_wind_onshore_day_ahead"] - changed["forecast_solar_day_ahead"]
+        )
+
+        before = float(self.fundamentals_model.predict(base)[0])
+        after = float(self.fundamentals_model.predict(changed)[0])
+        return {
+            "time": ts.strftime("%Y-%m-%d %H:%M"),
+            "changes_applied_mw": {"wind": wind_change_mw, "solar": solar_change_mw, "demand": demand_change_mw},
+            "forecast_before_eur_mwh": round(before, 2),
+            "forecast_after_eur_mwh": round(after, 2),
+            "price_change_eur_mwh": round(after - before, 2),
+            "note": "Scenario forecasts use a model based on fundamentals only (no official market price).",
+        }
+
 
 service = ForecastService()
 
@@ -86,10 +122,15 @@ def explain_forecast(datetime: str) -> str:
     return json.dumps(service.explain(datetime))
 
 
+def run_scenario(datetime: str, wind_change_mw: float = 0, solar_change_mw: float = 0, demand_change_mw: float = 0) -> str:
+    return json.dumps(service.scenario(datetime, wind_change_mw, solar_change_mw, demand_change_mw))
+
+
 TOOL_FUNCTIONS = {
     "query_database": query_database,
     "forecast_price": forecast_price,
     "explain_forecast": explain_forecast,
+    "run_scenario": run_scenario,
 }
 
 
@@ -143,6 +184,27 @@ TOOL_SCHEMAS = [
                 "type": "object",
                 "properties": {
                     "datetime": {"type": "string", "description": "Local Madrid time, format 'YYYY-MM-DD HH:00'."}
+                },
+                "required": ["datetime"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_scenario",
+            "description": (
+                f"What-if analysis for one specific hour in {FORECAST_YEAR}: re-run the forecast after changing "
+                "the expected wind generation, solar generation and/or demand, and return how the price changes. "
+                "Use it for questions like 'what if wind were 5 GW higher?'. 1 GW = 1000 MW."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "datetime": {"type": "string", "description": "Local Madrid time, format 'YYYY-MM-DD HH:00'."},
+                    "wind_change_mw": {"type": "number", "description": "Change in wind generation in MW (e.g. 5000 or -2000)."},
+                    "solar_change_mw": {"type": "number", "description": "Change in solar generation in MW."},
+                    "demand_change_mw": {"type": "number", "description": "Change in electricity demand in MW."},
                 },
                 "required": ["datetime"],
             },
