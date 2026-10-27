@@ -33,12 +33,13 @@ Table `hourly` (one row per hour, Spain, 2015-01-01 to 2018-12-31, local Madrid 
 
 Table `forecasts` (one row per hour of 2018 only, the model's out-of-sample test year):
 - time TEXT, same format as above
+- year INTEGER (always 2018), month INTEGER (1-12), day_of_week INTEGER (0=Monday ... 6=Sunday), hour INTEGER (0-23).
+  Filter on these columns instead of matching the time text, e.g. WHERE month = 3 for March.
 - forecast REAL: our LightGBM model's 24-hours-ahead price forecast in EUR/MWh
 - actual REAL: actual price in EUR/MWh
 - price_day_ahead REAL: official day-ahead market price in EUR/MWh
-- abs_error REAL: absolute error of our forecast in EUR/MWh, i.e. ABS(forecast - actual)
-
-Note: the official day-ahead price is also a forecast of the actual price. Its error is ABS(actual - price_day_ahead).
+- abs_error REAL: absolute error of OUR MODEL's forecast in EUR/MWh, i.e. ABS(forecast - actual)
+- official_abs_error REAL: absolute error of the OFFICIAL day-ahead price in EUR/MWh, i.e. ABS(price_day_ahead - actual)
 """.strip()
 
 
@@ -69,10 +70,15 @@ def _forecasts_table(df: pd.DataFrame) -> pd.DataFrame:
     model = load_model("lightgbm_price_24h")
 
     out = pd.DataFrame(index=X_test.index)
+    out["year"] = X_test.index.year
+    out["month"] = X_test.index.month
+    out["day_of_week"] = X_test.index.dayofweek
+    out["hour"] = X_test.index.hour
     out["forecast"] = model.predict(X_test)
     out["actual"] = y_test
     out["price_day_ahead"] = X_test["price_day_ahead"]
     out["abs_error"] = (out["forecast"] - out["actual"]).abs()
+    out["official_abs_error"] = (out["price_day_ahead"] - out["actual"]).abs()
     return out.round(2)
 
 

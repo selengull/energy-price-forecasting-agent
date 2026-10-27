@@ -104,6 +104,30 @@ Agent: The model's biggest error in 2018 was €34.66/MWh, at 19:00 on March 11,
 - **Self-correction:** tool errors are returned to the LLM so it can fix its own query (see example above).
 - **Bounded:** at most 6 tool-calling steps per question.
 
+### Evaluating the agent
+
+Code: [`src/agent/evaluation.py`](src/agent/evaluation.py)
+
+An LLM app that "seems to work" in a demo is not the same as one that works reliably. The agent is evaluated on **21 questions with known answers** (historical data, model performance, single forecasts, explanations and what-if scenarios). The answer key is computed from the database and the model at run time, so it can never go stale. Each question is asked **3 times**, because LLM answers vary between runs.
+
+Each run checks whether the agent (1) called the right tool and (2) gave the correct number (0.5 % tolerance; counts must match exactly).
+
+| Iteration | Answer accuracy | Failure found | Fix |
+|---|---:|---|---|
+| 1 | 95 % | Used the *model's* error column when asked about the *official* forecast's error | Added an explicit `official_abs_error` column |
+| 2 | 97 % | Matched `time LIKE '2018-03-% 00:00'`, which fails because times include seconds | Added `month`, `day_of_week`, `hour` columns to the forecasts table |
+| 3 | 97 % | Filtered `forecasts` by `year`, a column that only existed in the other table | Gave both tables the same calendar columns |
+| **4** | **100 %** (63/63) | none | |
+
+Tool choice was 100 % correct in every iteration; average answer time is 4.5 s on a 4 GB laptop GPU.
+
+**Lesson:** every failure came from the *data design*, not the model being "not smart enough". Small models do best when the schema leaves no room for ambiguity, and running each question several times was essential to catch failures that appeared only once in three runs.
+
+```bash
+python -m src.agent.evaluation --repeats 3                 # evaluate the default model
+python -m src.agent.evaluation --model another-model-name   # compare another model
+```
+
 ## Project Structure
 
 ```

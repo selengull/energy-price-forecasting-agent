@@ -57,12 +57,12 @@ class AgentReply:
 
 
 class EnergyAnalystAgent:
-    def __init__(self, max_steps: int = 6):
+    def __init__(self, max_steps: int = 6, model: str | None = None):
         self.client = OpenAI(
             base_url=os.getenv("LLM_BASE_URL", "http://localhost:1234/v1"),
             api_key=os.getenv("LLM_API_KEY", "lm-studio"),  # LM Studio ignores the key
         )
-        self.model = os.getenv("LLM_MODEL", "qwen3-4b-instruct-2507")
+        self.model = model or os.getenv("LLM_MODEL", "qwen3-4b-instruct-2507")
         self.max_steps = max_steps
         self.messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
