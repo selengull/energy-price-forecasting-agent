@@ -194,11 +194,3 @@ The web app has two tabs:
 
 ![SHAP drivers in the app](reports/figures/app_shap.jpeg)
 
-## Roadmap
-
-- [x] Data loading, cleaning and EDA
-- [x] Baseline and gradient boosting forecasting models
-- [x] SHAP explainability and R statistical analysis
-- [x] LLM analyst agent with tools
-- [x] Streamlit app
-- [x] Final results and demo
