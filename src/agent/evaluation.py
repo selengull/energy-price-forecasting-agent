@@ -89,6 +89,14 @@ CASES = [
     Case("explain", "What was the biggest driver of the model's forecast for 1 April 2018 at 04:00?",
          ["explain_forecast"], expected_keywords=["day-ahead", "day ahead", "official"]),
 
+    # ---- Questions in Turkish (dates must be converted by the agent) ----
+    Case("turkish", "13 Kasım 2018 saat 12'de elektrik fiyatı ne kadardı?", ["forecast_price", "query_database"],
+         sql_value("SELECT price FROM hourly WHERE time = '2018-11-13 12:00:00'")),
+    Case("turkish", "2017 yılında ortalama elektrik fiyatı neydi?", ["query_database"],
+         sql_value("SELECT AVG(price) FROM hourly WHERE year = 2017")),
+    Case("turkish", "2018'de modelin ortalama hatası ne kadardı?", ["query_database"],
+         sql_value("SELECT AVG(abs_error) FROM forecasts")),
+
     # ---- What-if scenarios ----
     Case("scenario", "How would the price on 6 November 2018 at 08:00 change if wind generation were 5 GW higher?",
          ["run_scenario"], lambda: service.scenario("2018-11-06 08:00", wind_change_mw=5000)["price_change_eur_mwh"]),
@@ -98,9 +106,17 @@ CASES = [
 
 
 def numbers_in(text: str) -> list[float]:
-    """All numbers in a text, e.g. '€1,234.5' -> 1234.5 (thousands separators removed)."""
-    cleaned = re.sub(r"(?<=\d),(?=\d{3}\b)", "", text)
-    return [float(n) for n in re.findall(r"-?\d+(?:\.\d+)?", cleaned)]
+    """All numbers in a text, read both in English ('1,234.5') and Turkish/European ('1.234,5') format."""
+    numbers = []
+    for token in re.findall(r"-?\d[\d.,]*\d|-?\d", text):
+        english = token.replace(",", "")
+        european = token.replace(".", "").replace(",", ".")
+        for candidate in (english, european):
+            try:
+                numbers.append(float(candidate))
+            except ValueError:
+                pass
+    return numbers
 
 
 def answer_is_correct(answer: str, expected: float | None, keywords: list[str]) -> bool:

@@ -1,14 +1,36 @@
 # ⚡ Energy Price Forecasting Agent
 
-Forecasting hourly day-ahead electricity prices in the Spanish market with machine learning, plus an LLM-powered analyst assistant that answers natural-language questions about the market.
+Forecasting hourly electricity prices in the Spanish market 24 hours ahead, explaining what drives them, and an LLM analyst agent that answers questions about the market, runs what-if scenarios, and is evaluated for accuracy.
 
-> 🚧 Work in progress
+![App: chat with the analyst agent](reports/figures/app_chat.jpeg)
 
-## Project Goals
+## Highlights
 
-1. **Forecast** hourly electricity prices 24 hours ahead and beat strong baselines.
-2. **Explain** what drives prices (wind, solar, gas, demand, weather) using SHAP.
-3. **Ask** questions in plain English through an LLM agent that queries the data, runs the model, and plots results.
+| | |
+|---|---|
+| **Forecasting** | LightGBM, test MAE **3.80 €/MWh** on the unseen year 2018, **27 % better** than a naive baseline |
+| **Explainability** | SHAP explanations for every single forecast, including a documented failure case |
+| **Statistics (R)** | Each extra GW of wind lowers the price by **≈ 1 €/MWh** (Newey-West regression) |
+| **LLM agent** | Tool-calling agent with SQL, forecast, SHAP and what-if tools; runs locally for free |
+| **Evaluation** | **72/72 correct** on 24 test questions × 3 runs, after 5 measured iterations |
+| **App** | Streamlit app with agent chat and an interactive forecast explorer |
+
+**Tech:** Python · pandas · LightGBM · scikit-learn · SHAP · R (sandwich, lmtest, ggplot2) · SQLite · LLM tool calling (OpenAI-compatible API, LM Studio, Qwen3-4B) · Streamlit · Plotly
+
+## How it works
+
+```
+ Kaggle CSVs ──► cleaning ──► features ──► LightGBM ──► forecasts (2018)
+                                              │              │
+                                            SHAP          SQLite DB
+                                              │              │
+                         ┌────────────────────┴──────────────┴─────────────┐
+                         │  LLM agent: query_database · forecast_price ·   │
+                         │             explain_forecast · run_scenario     │
+                         └────────────────────────┬────────────────────────┘
+                                                  │
+                                           Streamlit app
+```
 
 ## Dataset
 
@@ -108,7 +130,7 @@ Agent: The model's biggest error in 2018 was €34.66/MWh, at 19:00 on March 11,
 
 Code: [`src/agent/evaluation.py`](src/agent/evaluation.py)
 
-An LLM app that "seems to work" in a demo is not the same as one that works reliably. The agent is evaluated on **21 questions with known answers** (historical data, model performance, single forecasts, explanations and what-if scenarios). The answer key is computed from the database and the model at run time, so it can never go stale. Each question is asked **3 times**, because LLM answers vary between runs.
+An LLM app that "seems to work" in a demo is not the same as one that works reliably. The agent is evaluated on **24 questions with known answers** (historical data, model performance, single forecasts, explanations, what-if scenarios, and questions in Turkish). The answer key is computed from the database and the model at run time, so it can never go stale. Each question is asked **3 times**, because LLM answers vary between runs.
 
 Each run checks whether the agent (1) called the right tool and (2) gave the correct number (0.5 % tolerance; counts must match exactly).
 
@@ -117,9 +139,10 @@ Each run checks whether the agent (1) called the right tool and (2) gave the cor
 | 1 | 95 % | Used the *model's* error column when asked about the *official* forecast's error | Added an explicit `official_abs_error` column |
 | 2 | 97 % | Matched `time LIKE '2018-03-% 00:00'`, which fails because times include seconds | Added `month`, `day_of_week`, `hour` columns to the forecasts table |
 | 3 | 97 % | Filtered `forecasts` by `year`, a column that only existed in the other table | Gave both tables the same calendar columns |
-| **4** | **100 %** (63/63) | none | |
+| 4 | 100 % (63/63) | Manual test: refused a Turkish question with a vague word ("harcama" = spending) | Prompt rules: convert dates in any language, state an assumption instead of refusing, do arithmetic in SQL. Added 3 Turkish test questions |
+| **5** | **100 %** (72/72) | none | |
 
-Tool choice was 100 % correct in every iteration; average answer time is 4.5 s on a 4 GB laptop GPU.
+Tool choice was 100 % correct in every iteration; average answer time is 4.7 s on a 4 GB laptop GPU.
 
 **Lesson:** every failure came from the *data design*, not the model being "not smart enough". Small models do best when the schema leaves no room for ambiguity, and running each question several times was essential to catch failures that appeared only once in three runs.
 
@@ -167,6 +190,10 @@ The web app has two tabs:
 - **Ask the analyst:** chat with the agent; every tool call (including the generated SQL and its result) can be expanded.
 - **Forecast explorer:** pick any day in 2018 to compare the actual price, the model forecast and the official day-ahead price, then pick an hour to see its SHAP drivers.
 
+![Forecast explorer](reports/figures/app_explorer.jpeg)
+
+![SHAP drivers in the app](reports/figures/app_shap.jpeg)
+
 ## Roadmap
 
 - [x] Data loading, cleaning and EDA
@@ -174,4 +201,4 @@ The web app has two tabs:
 - [x] SHAP explainability and R statistical analysis
 - [x] LLM analyst agent with tools
 - [x] Streamlit app
-- [ ] Final results and demo
+- [x] Final results and demo

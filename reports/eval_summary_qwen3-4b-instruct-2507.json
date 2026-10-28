@@ -1,17 +1,18 @@
 {
   "model": "qwen3-4b-instruct-2507",
-  "questions": 21,
+  "questions": 24,
   "runs_per_question": 3,
-  "always_correct": 21,
+  "always_correct": 24,
   "sometimes_wrong": {},
   "answer_accuracy": 1.0,
   "tool_accuracy": 1.0,
-  "avg_seconds": 4.5,
+  "avg_seconds": 4.7,
   "answer_accuracy_by_category": {
     "explain": 1.0,
     "forecast": 1.0,
     "performance": 1.0,
     "scenario": 1.0,
-    "sql": 1.0
+    "sql": 1.0,
+    "turkish": 1.0
   }
 }
